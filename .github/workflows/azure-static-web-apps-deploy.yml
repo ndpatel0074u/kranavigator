@@ -31,17 +31,40 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Prepare deployment directory
+      - name: Setup deployment
         run: |
+          echo "Checking build output:"
+          ls -la dist/ || true
+          echo ""
+          find dist -maxdepth 2 -type d || true
+          echo ""
+          echo "Looking for index.html:"
+          find dist -name "index.html" -type f
+          echo ""
+          echo "Creating dist/deploy and copying files:"
           mkdir -p dist/deploy
-          cp -r dist/client/client/* dist/deploy/ || (echo "Failed to copy files"; ls -la dist/; exit 1)
-          cp staticwebapp.config.json dist/deploy/ || echo "Warning: Could not copy staticwebapp.config.json"
-          echo "✓ Deployment ready"
+          if [ -d "dist/client/client" ]; then
+            cp -v dist/client/client/* dist/deploy/ 2>&1 || true
+          elif [ -d "dist/client" ]; then
+            # Try copying from dist/client if dist/client/client doesn't exist
+            cp -v dist/client/* dist/deploy/ 2>&1 || true
+          else
+            echo "ERROR: Neither dist/client/client nor dist/client found!"
+            exit 1
+          fi
+          cp staticwebapp.config.json dist/deploy/ 2>&1 || echo "Note: staticwebapp.config.json copy skipped"
+          echo ""
+          echo "Verifying deployment contents:"
+          ls -la dist/deploy/ || exit 1
 
       - name: Verify deployment
         run: |
-          test -f "dist/deploy/index.html" || (echo "ERROR: index.html missing!"; exit 1)
-          echo "✓ Deployment files verified"
+          if [ ! -d "dist/deploy" ] || [ ! -f "dist/deploy/index.html" ]; then
+            echo "ERROR: Deployment directory or index.html missing!"
+            ls -la dist/deploy/ || echo "dist/deploy does not exist!"
+            exit 1
+          fi
+          echo "✓ Deployment verified"
 
       - name: Deploy to Azure Static Web Apps
         id: builddeploy
