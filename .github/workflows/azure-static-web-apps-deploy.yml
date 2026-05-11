@@ -34,14 +34,6 @@ jobs:
       - name: Debug - List dist directory
         run: find dist -type f -name "*.html" | head -20
 
-      - name: Reorganize build output for Azure Static Web Apps
-        run: |
-          if [ -d "dist/client/client" ]; then
-            # Move client files to root of dist/client
-            mv dist/client/client/* dist/client/
-            rm -rf dist/client/client dist/client/server
-          fi
-
       - name: Verify Azure token is set
         run: |
           if [ -z "${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}" ]; then
@@ -57,7 +49,7 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           action: "upload"
-          app_location: "dist/client"
+          app_location: "dist/client/client"
           skip_app_build: true
 
   close_pull_request_job:
