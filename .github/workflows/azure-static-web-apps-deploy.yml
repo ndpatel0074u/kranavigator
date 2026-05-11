@@ -39,8 +39,14 @@ jobs:
             cp -r dist/client/client/* dist/deploy/
             echo "Copied dist/client/client to dist/deploy"
           fi
+          # Copy staticwebapp.config.json for routing configuration
+          if [ -f "staticwebapp.config.json" ]; then
+            cp staticwebapp.config.json dist/deploy/staticwebapp.config.json
+            echo "Copied staticwebapp.config.json to dist/deploy"
+          fi
           # List files to verify
-          find dist/deploy -type f -name "*.html" -o -name "*.js" -o -name "*.css" | head -20
+          echo "Files in dist/deploy:"
+          find dist/deploy -type f -name "*.html" -o -name "*.js" -o -name "*.css" -o -name "*staticwebapp*" | head -20
 
       - name: Verify Azure token is set
         run: |
