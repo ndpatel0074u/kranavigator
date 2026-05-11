@@ -31,6 +31,17 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Debug - List dist directory
+        run: find dist -type f -name "*.html" | head -20
+
+      - name: Reorganize build output for Azure Static Web Apps
+        run: |
+          if [ -d "dist/client/client" ]; then
+            # Move client files to root of dist/client
+            mv dist/client/client/* dist/client/
+            rm -rf dist/client/client dist/client/server
+          fi
+
       - name: Deploy to Azure Static Web Apps
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
@@ -38,7 +49,7 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          app_location: "dist/client/client"
+          app_location: "dist/client"
           output_location: ""
           skip_app_build: true
 
