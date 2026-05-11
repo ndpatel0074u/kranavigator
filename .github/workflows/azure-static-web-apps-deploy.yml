@@ -31,8 +31,16 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Debug - List dist directory
-        run: find dist -type f -name "*.html" | head -20
+      - name: Prepare deployment - flatten directory structure
+        run: |
+          # Copy client files to root of dist for deployment
+          mkdir -p dist/deploy
+          if [ -d "dist/client/client" ]; then
+            cp -r dist/client/client/* dist/deploy/
+            echo "Copied dist/client/client to dist/deploy"
+          fi
+          # List files to verify
+          find dist/deploy -type f -name "*.html" -o -name "*.js" -o -name "*.css" | head -20
 
       - name: Verify Azure token is set
         run: |
@@ -49,7 +57,7 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           action: "upload"
-          app_location: "dist/client/client"
+          app_location: "dist/deploy"
           skip_app_build: true
 
   close_pull_request_job:
