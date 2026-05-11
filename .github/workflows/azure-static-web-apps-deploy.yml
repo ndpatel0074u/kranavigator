@@ -31,65 +31,17 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Prepare deployment - copy files to deploy directory
+      - name: Prepare deployment directory
         run: |
-          echo "=== Build Output Structure ==="
-          ls -la dist/
-          echo ""
-          echo "=== Listing dist/client ==="
-          if [ -d "dist/client" ]; then
-            find dist/client -type f -name "*.html" | head -10
-            find dist/client -type f -name "index.html" | head -10
-          else
-            echo "dist/client does not exist!"
-          fi
-          echo ""
-          echo "=== Creating deployment directory ==="
           mkdir -p dist/deploy
-          echo "Created dist/deploy"
-          echo ""
-          echo "=== Copying client files ==="
-          if [ -d "dist/client/client" ]; then
-            cp -r dist/client/client/* dist/deploy/
-            echo "✓ Copied dist/client/client/* to dist/deploy"
-          else
-            echo "ERROR: dist/client/client does not exist!"
-            find dist -name "index.html" -type f
-            exit 1
-          fi
-          echo ""
-          echo "=== Copying staticwebapp.config.json ==="
-          if [ -f "staticwebapp.config.json" ]; then
-            cp staticwebapp.config.json dist/deploy/staticwebapp.config.json
-            echo "✓ Copied staticwebapp.config.json"
-          fi
-          echo ""
-          echo "=== Verifying deployment directory ==="
-          echo "Contents of dist/deploy:"
-          ls -la dist/deploy/
-          echo ""
-          echo "HTML files in deployment:"
-          find dist/deploy -name "*.html" -type f
-          echo ""
-          echo "=== Ready for deployment ===" 
+          cp -r dist/client/client/* dist/deploy/ || (echo "Failed to copy files"; ls -la dist/; exit 1)
+          cp staticwebapp.config.json dist/deploy/ || echo "Warning: Could not copy staticwebapp.config.json"
+          echo "✓ Deployment ready"
 
-      - name: Verify deployment prerequisites
+      - name: Verify deployment
         run: |
-          echo "=== Verification Checklist ==="
-          echo "1. Azure token is set: $([ -z '${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}' ] && echo '❌ NOT SET' || echo '✓ SET')"
-          echo "2. dist/deploy exists: $([ -d 'dist/deploy' ] && echo '✓ YES' || echo '❌ NO')"
-          echo "3. dist/deploy/index.html exists: $([ -f 'dist/deploy/index.html' ] && echo '✓ YES' || echo '❌ NO')"
-          echo "4. dist/deploy/staticwebapp.config.json exists: $([ -f 'dist/deploy/staticwebapp.config.json' ] && echo '✓ YES' || echo '❌ NO')"
-          echo ""
-          echo "=== Deployment Configuration ==="
-          echo "app_location: dist/deploy"
-          echo "skip_app_build: true"
-          echo "action: upload"
-          echo ""
-          if [ ! -f 'dist/deploy/index.html' ]; then
-            echo "ERROR: index.html not found in deployment directory!"
-            exit 1
-          fi
+          test -f "dist/deploy/index.html" || (echo "ERROR: index.html missing!"; exit 1)
+          echo "✓ Deployment files verified"
 
       - name: Deploy to Azure Static Web Apps
         id: builddeploy
