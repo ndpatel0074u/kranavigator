@@ -1,17 +1,14 @@
 {
-  "routes": [
-    {
-      "route": "/*",
-      "serve": "/index.html",
-      "statusCode": 200
-    }
-  ],
   "navigationFallback": {
     "rewrite": "/index.html",
     "exclude": [
       "/assets/*",
       "/*.json",
-      "/*.txt"
+      "/*.txt",
+      "/*.js",
+      "/*.css",
+      "/*.mjs",
+      "/*.map"
     ]
   },
   "mobileApiLocation": "api",
