@@ -50,7 +50,6 @@ jobs:
           cp server.js deploy-package/
           cp package.json deploy-package/
           cp package-lock.json deploy-package/
-          cp .deployment deploy-package/
           
           echo "✓ Deployment package created"
           echo "Contents:"
