@@ -51,27 +51,9 @@ jobs:
           cp package.json deploy-package/
           cp package-lock.json deploy-package/ 2>/dev/null || true
           cp web.config deploy-package/ 2>/dev/null || true
+          cp .deployment deploy-package/ 2>/dev/null || true
           cp iisnode.yml deploy-package/ 2>/dev/null || true
           cp startup.sh deploy-package/ 2>/dev/null || true
-          
-          # Create .deploymentignore
-          cat > deploy-package/.deploymentignore << 'EOF'
-          .git
-          .github
-          src
-          .vscode
-          .env.local
-          .DS_Store
-          *.md
-          infra
-          public
-          tsconfig.json
-          vite.config.ts
-          eslint.config.js
-          components.json
-          bunfig.toml
-          bun.lockb
-          EOF
           
           echo "Deployment package contents:"
           ls -la deploy-package/
