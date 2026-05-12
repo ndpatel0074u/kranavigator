@@ -1,2 +1,2 @@
 [config]
-command = npm ci --production
+command = npm ci --force
