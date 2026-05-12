@@ -39,12 +39,23 @@ jobs:
           echo "Client files:"
           ls -la dist/client/ || echo "No client directory"
 
+      - name: Create deployment package
+        run: |
+          mkdir -p deploy-package
+          cp -r dist deploy-package/
+          cp server.js deploy-package/
+          cp package.json deploy-package/
+          cp package-lock.json deploy-package/ 2>/dev/null || true
+          cp web.config deploy-package/ 2>/dev/null || true
+          echo "Deployment package contents:"
+          ls -la deploy-package/
+
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: '.'
+          package: './deploy-package'
 
       - name: Deployment Summary
         run: |
