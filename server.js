@@ -11,26 +11,36 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 const clientPath = path.join(__dirname, "dist", "client");
+const assetsPath = path.join(clientPath, "assets");
 
 if (!fs.existsSync(clientPath)) {
   console.error(`ERROR: dist/client not found at ${clientPath}`);
   process.exit(1);
 }
 
-// Get CSS and JS files from dist/client
+// Get CSS and JS files from dist/client/assets
 function getAssets() {
-  const files = readdirSync(clientPath);
+  if (!fs.existsSync(assetsPath)) {
+    console.error(`ERROR: assets directory not found at ${assetsPath}`);
+    process.exit(1);
+  }
+  
+  const files = readdirSync(assetsPath);
   const styles = files.filter(f => f.endsWith('.css'));
-  const scripts = files.filter(f => f.endsWith('.js') && !f.startsWith('.'));
+  const scripts = files.filter(f => f.endsWith('.js'));
+  
+  // Sort scripts to ensure consistent loading order
+  scripts.sort();
+  
   return { styles, scripts };
 }
 
 const { styles, scripts } = getAssets();
 
 console.log(`📁 Serving from: ${clientPath}`);
-console.log(`📄 Found ${styles.length} CSS files, ${scripts.length} JS files`);
+console.log(`📦 Assets: ${styles.length} CSS, ${scripts.length} JS files`);
 
-// Serve static assets
+// Serve static assets from dist/client
 app.use(express.static(clientPath, {
   maxAge: "1h",
   etag: false,
@@ -47,9 +57,9 @@ function generateHTML() {
     <title>KRA Navigator</title>
 `;
   
-  // Inject CSS links
+  // Inject CSS links (from assets/)
   styles.forEach(style => {
-    html += `    <link rel="stylesheet" href="/${style}" />\n`;
+    html += `    <link rel="stylesheet" href="/assets/${style}" />\n`;
   });
   
   html += `  </head>
@@ -57,9 +67,9 @@ function generateHTML() {
     <div id="app"></div>
 `;
   
-  // Inject script tags in order
+  // Inject script tags in order (from assets/)
   scripts.forEach(script => {
-    html += `    <script type="module" src="/${script}"></script>\n`;
+    html += `    <script type="module" src="/assets/${script}"><\/script>\n`;
   });
   
   html += `  </body>
@@ -67,7 +77,7 @@ function generateHTML() {
   return html;
 }
 
-// SPA routing - send index.html for all non-file requests
+// SPA routing - send HTML for all non-file requests
 app.get("*", (req, res) => {
   // Check if it's requesting a file (has extension)
   if (path.extname(req.path)) {
