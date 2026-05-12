@@ -1,0 +1,16 @@
+.git
+.github
+node_modules
+src
+.vscode
+.env.local
+.DS_Store
+*.md
+infra
+public
+tsconfig.json
+vite.config.ts
+eslint.config.js
+components.json
+bunfig.toml
+bun.lockb
