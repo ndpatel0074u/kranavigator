@@ -47,16 +47,20 @@ jobs:
         run: |
           mkdir -p deploy-package
           cp -r dist deploy-package/
-          cp -r node_modules deploy-package/ 2>/dev/null || echo "node_modules not available locally"
           cp server.js deploy-package/
           cp package.json deploy-package/
-          cp package-lock.json deploy-package/ 2>/dev/null || true
+          cp package-lock.json deploy-package/
+          cp .deployment deploy-package/
           
-          echo "Deployment package contents:"
+          echo "✓ Deployment package created"
+          echo "Contents:"
           ls -la deploy-package/
           echo ""
-          echo "Package size:"
-          du -sh deploy-package/
+          echo "Client files in dist/client:"
+          find deploy-package/dist/client -type f | head -10
+          echo ""
+          echo "Total files:"
+          find deploy-package -type f | wc -l
 
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
