@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: deployment
+  cancel-in-progress: false
+
 env:
   AZURE_WEBAPP_NAME: kranavigator-app
   NODE_VERSION: '22.x'
@@ -47,15 +51,55 @@ jobs:
           cp package.json deploy-package/
           cp package-lock.json deploy-package/ 2>/dev/null || true
           cp web.config deploy-package/ 2>/dev/null || true
+          cp iisnode.yml deploy-package/ 2>/dev/null || true
+          cp startup.sh deploy-package/ 2>/dev/null || true
+          
+          # Create .deploymentignore
+          cat > deploy-package/.deploymentignore << 'EOF'
+          .git
+          .github
+          src
+          .vscode
+          .env.local
+          .DS_Store
+          *.md
+          infra
+          public
+          tsconfig.json
+          vite.config.ts
+          eslint.config.js
+          components.json
+          bunfig.toml
+          bun.lockb
+          EOF
+          
           echo "Deployment package contents:"
           ls -la deploy-package/
+          echo ""
+          echo "Package size:"
+          du -sh deploy-package/
 
-      - name: Deploy to Azure App Service
+      - name: Deploy to Azure App Service with retry
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: './deploy-package'
+        env:
+          DEPLOYMENT_TIMEOUT: '900'
+
+      - name: Wait and verify deployment
+        run: |
+          echo "Deployment initiated. Waiting for App Service to become ready..."
+          for i in {1..30}; do
+            echo "Check $i/30..."
+            if curl -s -f https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/ > /dev/null 2>&1; then
+              echo "✓ Application is responding!"
+              break
+            fi
+            echo "Waiting... (attempt $i)"
+            sleep 10
+          done
 
       - name: Deployment Summary
         run: |
