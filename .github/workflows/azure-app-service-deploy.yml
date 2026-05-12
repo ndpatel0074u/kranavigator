@@ -43,17 +43,14 @@ jobs:
           echo "Client files:"
           ls -la dist/client/ || echo "No client directory"
 
-      - name: Create deployment package
+      - name: Create deployment package for Linux
         run: |
           mkdir -p deploy-package
           cp -r dist deploy-package/
+          cp -r node_modules deploy-package/ 2>/dev/null || echo "node_modules not available locally"
           cp server.js deploy-package/
           cp package.json deploy-package/
           cp package-lock.json deploy-package/ 2>/dev/null || true
-          cp web.config deploy-package/ 2>/dev/null || true
-          cp .deployment deploy-package/ 2>/dev/null || true
-          cp iisnode.yml deploy-package/ 2>/dev/null || true
-          cp startup.sh deploy-package/ 2>/dev/null || true
           
           echo "Deployment package contents:"
           ls -la deploy-package/
@@ -61,27 +58,26 @@ jobs:
           echo "Package size:"
           du -sh deploy-package/
 
-      - name: Deploy to Azure App Service with retry
+      - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: './deploy-package'
-        env:
-          DEPLOYMENT_TIMEOUT: '900'
 
       - name: Wait and verify deployment
         run: |
-          echo "Deployment initiated. Waiting for App Service to become ready..."
-          for i in {1..30}; do
-            echo "Check $i/30..."
-            if curl -s -f https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/ > /dev/null 2>&1; then
+          echo "Waiting for App Service to become ready..."
+          for i in {1..40}; do
+            echo "Check $i/40..."
+            if curl -s -I https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/ | grep -q "200\|301\|302"; then
               echo "✓ Application is responding!"
-              break
+              exit 0
             fi
             echo "Waiting... (attempt $i)"
-            sleep 10
+            sleep 5
           done
+          echo "⚠ Timeout waiting for app to respond"
 
       - name: Deployment Summary
         run: |
